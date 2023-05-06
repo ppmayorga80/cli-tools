@@ -1,3 +1,14 @@
+#  ____          _
+# |  _ \ ___  __| |_ __ ___
+# | |_) / _ \/ _` | '__/ _ \
+# |  __/  __/ (_| | | | (_) |
+# |_|   \___|\__,_|_|  \___/
+#
+.idea/
+.vscode/
+unix.egg-info/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
