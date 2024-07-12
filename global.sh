@@ -4,7 +4,7 @@ export PIPENV_VERBOSITY=-1
 
 CLI_TOOLS_PATH="$HOME/Github/cli-tools/.venv/bin"
 if [[ -d $CLI_TOOLS_PATH ]]; then
-    export PATH="${CLI_TOOLS_PATH}:$PATH"
+    export PATH="$PATH:${CLI_TOOLS_PATH}"
 fi
 
 function machine {
