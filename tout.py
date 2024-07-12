@@ -1,7 +1,7 @@
 """logout app
 
 Usage:
-    tout.py [--progress] <SECONDS>
+    tout.py [--acelerate=K] [--progress] <SECONDS>
 
 Arguments:
     <SECONDS>   the number of seconds to wait before logout, use the format
@@ -9,6 +9,8 @@ Arguments:
 
 Options:
     -p, --progress  show a progress bar
+    -a,--acelerate=K   speed up the timer [default: 1.0]
+
 
 Examples:
     tout.py 3601    #1hr + 1 sec
@@ -19,8 +21,10 @@ Examples:
 import os
 import re
 import time
+
 from docopt import docopt
 from tqdm import tqdm
+
 
 def sec2time(seconds:int)->tuple[int,int,int]:
     s = seconds % 60
@@ -31,6 +35,7 @@ def sec2time(seconds:int)->tuple[int,int,int]:
 
 def main(**kwargs: dict or list):
     args = docopt(doc=__doc__, **kwargs)
+    k = float(args['--acelerate'])
 
     response = re.findall(r'^(\d+)$', args['<SECONDS>'])
     if response:
@@ -62,7 +67,7 @@ def main(**kwargs: dict or list):
         bs.refresh()
 
         for x in range(seconds,0,-1):
-            time.sleep(1)
+            time.sleep(1.0 / k)
             h,m,s = sec2time(x-1)
             bh.n = h
             bm.n = m
