@@ -7,6 +7,12 @@ if [[ -d $CLI_TOOLS_PATH ]]; then
     export PATH="$PATH:${CLI_TOOLS_PATH}"
 fi
 
+function out {
+    tout $@
+    gnome-session-quit --no-prompt
+}
+
+
 function machine {
     UNAME_OUT="$(uname -s)"
     case "${UNAME_OUT}" in
