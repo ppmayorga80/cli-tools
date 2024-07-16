@@ -43,11 +43,13 @@ def main(**kwargs: dict or list):
     else:
         response = re.findall(r'^(\d+):(\d+)$', args['<SECONDS>'])
         if response:
-            seconds = 60*int(response[0]) + int(response[1])
+            a,b = response[0]
+            seconds = 60*int(a) + int(b)
         else:
             response = re.findall(r'^(\d+):(\d+):(\d+)$', args['<SECONDS>'])
             if response:
-                seconds = 3600 * int(response[0]) + 60*int(response[1]) + int(response[2])
+                a, b, c = response[0]
+                seconds = 3600 * int(a) + 60*int(b) + int(c)
             else:
                raise ValueError(f"<SECONDS> argument is not valid")
 
