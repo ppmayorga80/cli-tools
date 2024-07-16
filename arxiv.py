@@ -3,8 +3,8 @@ and if there is an arxiv link parse it and copy
 the url to the arxiv article
 
 Usage:
-    arxiv.py [--no-open] [--arxiv]
-    arxiv.py [--no-open] --google
+    arxiv.py [--no-open]
+    arxiv.py [--no-open] --use-google
 
 Options:
     --no-open     dont open the urls
@@ -59,7 +59,7 @@ class Arxiv:
 def main(**kwargs: dict or list):
     args = docopt(doc=__doc__, **kwargs)
     print(args)
-    arxiv_opener = Arxiv(arxiv=args["--arxiv"], open_url=not args["--no-open"])
+    arxiv_opener = Arxiv(arxiv=not args["--use-google"], open_url=not args["--no-open"])
     while(True):
         arxiv_opener.run()
         time.sleep(0.5)
