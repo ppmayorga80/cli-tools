@@ -6,8 +6,8 @@ LONG_DESCRIPTION = 'Command Line tools'
 
 # Setting up
 setup(
-    # the name must match the folder name 'verysimplemodule'
-    name="unix",
+    # the name must match the folder name ''
+    name="cli-tools",
     version=VERSION,
     author="Pedro Mayorga",
     author_email="ppmayorga80@gmail.com",
@@ -27,6 +27,7 @@ setup(
             'img2aa = img2aa:main',
             'ro3 = ro3:main',
             'tout = tout:main',
+            'arxiv = arxiv:main',
         ],
     },
     # needs to be installed along with your package. Eg: 'caer'
