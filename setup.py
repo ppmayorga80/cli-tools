@@ -15,7 +15,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "colorama", "docopt", "google-cloud-storage", "pandas", "Pillow", "requests", "smart-open", "tabulate", "tqdm"
+        "colorama", "docopt", "pandas", "Pillow", "PyAutoGUI", "requests", "smart-open", "tabulate", "tqdm"
     ],  # add any additional packages that
     packages=find_packages(),
     entry_points={
@@ -28,6 +28,7 @@ setup(
             'ro3 = ro3:main',
             'tout = tout:main',
             'arxiv = arxiv:main',
+            'mr = mr:main',
         ],
     },
     # needs to be installed along with your package. Eg: 'caer'

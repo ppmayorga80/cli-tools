@@ -1,17 +1,20 @@
 """r.py
 
 Usage:
-    r.py [--dt=N]
+    r.py [--dt=N] [--path=PATH]
 
 Options:
-    --dt=N    the elapsed time in seconds [default: 10.0]
+    --dt=N             the elapsed time in seconds [default: 10.0]
+    --path=PATH        the initial path to start the search for python code [default: ~]
 """
 
 import os
 import time
 import random
-import pyautogui as pg
 
+from typing import Union
+
+import pyautogui as pg
 from docopt import docopt
 
 class MousePos:
@@ -89,14 +92,22 @@ def get_files(path:str):
             sub_path = os.path.join(root,d)
             get_files(path=sub_path)
 
+def main(**kwargs: Union[dict,list]):
+    """Entry point for fstail
 
-if __name__ == "__main__":
-    args = docopt(__doc__)
+    :param kwargs: if provided, is a list of parameters by docopt, otherwise, docopt will take them from sys.argv
+    :type kwargs: Dict or List
+    :return:
+    :rtype:
+    """
+    args = docopt(doc=__doc__, **kwargs)
     dt = float(args["--dt"])
+    path = args["--path"].replace("~",os.environ["HOME"])
 
     mouse = MousePos(idle_dt=dt)
 
-    for x in get_files("/home/pedro"):
+
+    for x in get_files(path):
         with open(x) as fp:
             for raw_line in fp.readlines():
                 line = raw_line[:-1] if raw_line.endswith("\n") else raw_line
@@ -106,3 +117,7 @@ if __name__ == "__main__":
                 if mouse.is_idle():
                     mouse.move()
 
+
+
+if __name__ == "__main__":
+    main()
