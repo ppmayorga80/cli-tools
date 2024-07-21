@@ -105,8 +105,6 @@ def main(**kwargs: Union[dict,list]):
     path = args["--path"].replace("~",os.environ["HOME"])
 
     mouse = MousePos(idle_dt=dt)
-
-
     for x in get_files(path):
         with open(x) as fp:
             for raw_line in fp.readlines():
