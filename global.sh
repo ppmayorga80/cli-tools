@@ -80,6 +80,11 @@ function activate {
 #                      /____/                       
 # --------------------------------------------------
 function cfiglet_raw {
+    if ! [ -x "$(command -v figlet)" ]; then
+        echo 'Error: figlet is not installed.' >&2
+        exit 1
+    fi
+
     #1. define the COMMENT string 
     COMMENT="#"
     while getopts ":c:" OPTION; do
@@ -118,6 +123,10 @@ function cfiglet_raw {
 #        cfiglet -c// -f slant C italic style
 #        cfiglet -c-- SQL style
 function cfiglet {
+    if ! [ -x "$(command -v figlet)" ]; then
+        echo 'Error: figlet is not installed.' >&2
+        exit 1
+    fi
 
     UNAME_OUT="$(uname -s)"
     case "${UNAME_OUT}" in
