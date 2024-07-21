@@ -16,6 +16,7 @@ import os
 import re
 import time
 
+import requests
 import pyperclip
 
 from docopt import docopt
@@ -34,7 +35,7 @@ class ArxivListener:
         self.previous_arxiv_id = ""
 
     @classmethod
-    def is_valid(cls, arxiv_id: str) -> bool:
+    def is_arxiv_valid(cls, arxiv_id: str) -> bool:
         number_of_letters = len([x for x in arxiv_id if x.isalpha()])
         number_of_digits = len([x for x in arxiv_id if x.isdigit()])
         number_of_dots = len([x for x in arxiv_id if x == "."])
@@ -46,6 +47,19 @@ class ArxivListener:
 
         return False
 
+    @classmethod
+    def is_url_a_pdf(cls, url:str)->bool:
+        try:
+            response = requests.head(url)
+            if response.status_code==200:
+                if response.headers.get("content-type","") == "application/pdf":
+                    return True
+        
+            return False
+        except Exception as e:
+            return False
+
+
     def run(self):
         text = pyperclip.paste()
         if not text or text == self.previous_text:
@@ -55,20 +69,25 @@ class ArxivListener:
         response = ARXIV_REGEX.findall(text)
         if response:
             possible_arxiv_response = [re.sub(r"\.gz$", "", code2) for code1,code2 in response]
-            arxiv_response = [arxiv_id for arxiv_id in possible_arxiv_response if self.is_valid(arxiv_id)]
+            arxiv_response = [arxiv_id for arxiv_id in possible_arxiv_response if self.is_arxiv_valid(arxiv_id)]
             if arxiv_response:
-                arxiv_id = arxiv_response[0]
+                #take the last arxivid detected
+                arxiv_id = arxiv_response[-1]
             else:
                 return
 
-            if not self.is_valid(arxiv_id=arxiv_id) or arxiv_id == self.previous_arxiv_id:
+            if arxiv_id == self.previous_arxiv_id:
                 return
+
 
             self.previous_arxiv_id = arxiv_id
             if self.arxiv:
                 url = ARXIV_URL_FORMAT.format(arxiv_id=arxiv_id)
             else:
                 url = GOOGLE_URL_FORMAT.format(arxiv_id=arxiv_id)
+
+            if not self.is_url_a_pdf(url=url):
+                return
 
             print("input:", text)
             print("arxiv id:", arxiv_id)
