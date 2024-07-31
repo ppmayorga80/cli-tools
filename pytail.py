@@ -1,7 +1,7 @@
 """execute a tail command for a given cloud file (actually any cloud file) or local file
 
 Usage:
-  fstail [-n LINES] <FILENAME>
+  pytail [-n LINES] <FILENAME>
 
 Options:
     -n LINES                set the limit of tail-lines to be processed [default: 10], should be a positive value.

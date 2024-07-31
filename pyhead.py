@@ -1,7 +1,7 @@
 """execute the head command for a cloud file (actually any cloud file) or local file
 
 Usage:
-  fshead [-n LINES] <FILENAME>
+  pyhead [-n LINES] <FILENAME>
 
 Options:
     -n LINES                set the limit of head-lines to be processed [default: 10], should be a positive value.

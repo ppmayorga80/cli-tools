@@ -20,10 +20,11 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'fscat = fscat:main',
-            'fshead = fshead:main',
-            'fstail = fstail:main',
-            'fstab = fstab:main',
+            'pycat = pycat:main',
+            'pyhead = pyhead:main',
+            'pytail = pytail:main',
+            'pytab = pytab:main',
+            'pywc = pywc:main',
             'img2aa = img2aa:main',
             'ro3 = ro3:main',
             'tout = tout:main',

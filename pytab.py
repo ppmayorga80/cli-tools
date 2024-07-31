@@ -1,14 +1,14 @@
 """print CSV with rainbow colors using TABULATE
 
 Usage:
-  fs_tabulate [--colors COLORS] <FILENAME>
+  pytab [--colors NAMES] <FILENAME>
 
 Arguments:
     <FILENAME>              input filename to be processed (local, cloud) use a single dash to use stdin [default: -]
 
 
 Options:
-    --colors=COLORS         separated color names (separator is a comma without spaces)
+    --colors=NAMES          separated color names (separator is a comma without spaces)
                             [default: cyan,yellow,magenta,white,lightred,lightgreen,lightblue]
                             available color names are: red,green,blue,cyan,magenta,yellow,white,black
                             and "light" prefix version of them like "lightred" or "lightcyan"
