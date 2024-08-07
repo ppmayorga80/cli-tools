@@ -1,6 +1,7 @@
 """print CSV with rainbow colors using TABULATE
 
 Usage:
+  pytab [--colors NAMES]
   pytab [--colors NAMES] <FILENAME>
 
 Arguments:
@@ -68,7 +69,7 @@ def main(**kwargs):
     filename = args["<FILENAME>"]
 
     # consider - as a stdin
-    if filename == "-":
+    if filename is None or filename == "-":
         fp = sys.stdin
     else:
         fp = smart_open.open(filename, "r", encoding="utf8")

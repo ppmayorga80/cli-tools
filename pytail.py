@@ -7,7 +7,8 @@ Options:
     -n LINES                set the limit of tail-lines to be processed [default: 10], should be a positive value.
     <FILENAME>              input filename to be processed (local or cloud)
 """
-from typing import Dict, List, Type
+import sys
+from typing import Dict, List, Type, IO
 
 import smart_open
 from docopt import docopt
@@ -25,7 +26,7 @@ def str2num(text: str, default=None, class_type: Type = int):
     return val
 
 
-def tail(filename: str, n: int = 10):
+def tail(fp: IO, n: int = 10):
     """prints the tail-lines (default 10) of the given file `filename`
 
     :param filename: the local or cloud file
@@ -37,19 +38,17 @@ def tail(filename: str, n: int = 10):
     """
     # use a buffer to save the last `n` lines
     lines = []
-    with smart_open.open(filename) as fp:
-        # A. read the file line by line
-        for line in tqdm(fp, desc="reading...", leave=False):
-            # A.1 delete the first element to maintain only the last `n` lines
-            if len(lines) == n:
-                del lines[0]
-            # A.2 add the last processed line
-            lines.append(line)
-
-        # B. print the output
-        for line in lines:
-            end = "" if str(line).endswith("\n") else "\n"
-            print(line, end=end)
+    # A. read the file line by line
+    for line in tqdm(fp, desc="reading...", leave=False):
+        # A.1 delete the first element to maintain only the last `n` lines
+        if len(lines) == n:
+            del lines[0]
+        # A.2 add the last processed line
+        lines.append(line)
+    # B. print the output
+    for line in lines:
+        end = "" if str(line).endswith("\n") else "\n"
+        print(line, end=end)
 
 
 def main(**kwargs: Dict or List):
@@ -68,7 +67,8 @@ def main(**kwargs: Dict or List):
     if n is None or n < 1:
         raise ValueError("-n N must be an integer number greater than 0")
 
-    tail(arg_filename, n)
+    fp = smart_open.smart_open(arg_filename, "r") if arg_filename is not None else sys.stdin
+    tail(fp, n)
 
 
 if __name__ == '__main__':
