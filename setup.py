@@ -25,6 +25,7 @@ setup(
             'pytail = pytail:main',
             'pytab = pytab:main',
             'pywc = pywc:main',
+            'pyqr = pyqr:main',
             'img2aa = img2aa:main',
             'ro3 = ro3:main',
             'tout = tout:main',
