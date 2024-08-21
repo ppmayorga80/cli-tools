@@ -1,8 +1,7 @@
 """execute the cat command for a cloud file (actually any cloud file) or local file
 
 Usage:
-  pycat [--jsonl] [--offset=A] [--limit=N] <FILENAME>
-  pycat [--jsonl] [--offset=A] [--limit=N]
+  pycat [--jsonl] [--offset=A] [--limit=N] [--nl-at-end] <FILENAME>
 
 Arguments:
     <FILENAME>              input filename to be processed (local, cloud)
@@ -11,6 +10,7 @@ Options:
     -o A, --offset=A           start reading from line A [default: 0]
     -l N, --limit=N            only reads up to N lines
     -j, --jsonl                read a jsonl file, i.e. avoid empty lines
+    --nl-at-enf                a flag to add a new line at the end
 """
 import sys
 
@@ -19,7 +19,7 @@ from docopt import docopt
 from typing import Optional
 
 
-def cat(filename: Optional[str], offset: int = 0, limit: Optional[int] = None, is_jsonl: bool = False):
+def cat(filename: Optional[str], offset: int = 0, limit: Optional[int] = None, is_jsonl: bool = False, nl_at_end:bool=False):
     """Cat operation of given filename"""
     if filename is None:
         fp = sys.stdin
@@ -37,6 +37,9 @@ def cat(filename: Optional[str], offset: int = 0, limit: Optional[int] = None, i
         end = "" if str(line_k).endswith("\n") else "\n"
         print(line_k, end=end)
 
+    if nl_at_end:
+        print("")
+
     fp.close()
 
 
@@ -46,7 +49,7 @@ def main(**kwargs):
     arg_filename = args["<FILENAME>"]
     arg_offset = int(args["--offset"])
     arg_limit = int(args["--limit"]) if args["--limit"] else None
-    cat(arg_filename, offset=arg_offset, limit=arg_limit, is_jsonl=args["--jsonl"])
+    cat(arg_filename, offset=arg_offset, limit=arg_limit, is_jsonl=args["--jsonl"], nl_at_end=args["--nl-at-end"])
 
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@ from docopt import docopt
 from PIL import Image, ImageTk
 import tkinter
 import tkinter.scrolledtext
-from tkinterdnd2 import DND_FILES, TkinterDnD
+from tkinterdnd2 import DND_FILES, DND_ALL, TkinterDnD
 
 
 @dataclass
@@ -142,7 +142,7 @@ class App:
         self.root = TkinterDnD.Tk()
         self.root.title("QR Parser :: Drag and Drop QR Images")
 
-        self.root.drop_target_register(DND_FILES)
+        self.root.drop_target_register(DND_ALL)
         self.root.dnd_bind('<<Drop>>', self.on_drop)
 
         self.image = ""
@@ -155,7 +155,6 @@ class App:
         self.canvas_image = self.canvas.create_image(self.IM_PAD, self.IM_PAD, anchor=tkinter.NW, image=self.image)
 
         self.output = tkinter.scrolledtext.ScrolledText(self.root, height=10)
-        # self.output.configure(state='disabled')
 
         self.close_btn = tkinter.Button(self.root, text="Close", command=self.root.destroy)
 
