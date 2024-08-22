@@ -4,7 +4,7 @@ Usage:
     r.py [--dt=N] [--mouse] [--system] [--path=PATH]
 
 Options:
-    --dt=N             the elapsed time in seconds [default: 10.0]
+    -t,--dt=N             the elapsed time in seconds [default: 10.0]
     -m,--mouse         move the mouse in a random fashion
     -s,--system        move the mouse and use the keyboard to interact with the system
     --path=PATH        the initial path to start the search for python code [default: ~]
@@ -24,7 +24,6 @@ class SystemState:
     DEFAULT_IDLE_DT = 10.0
     SX = 50.0
     SY = 50.0
-    SYSTEM_RIGHT_CLICK_P = 0.1
 
     def __init__(self, idle_dt=DEFAULT_IDLE_DT):
         self.x = 0
@@ -83,23 +82,47 @@ class SystemState:
     def system_interation(self):
         x, y, _ = self.get_mouse_xy_and_time()
 
-        # try to display menu with right click, move through the items and exit
-        if random.uniform(0, 1) < self.SYSTEM_RIGHT_CLICK_P:
+        option_list = random.choices(["mouse", "system", "hotkey"], [1, 8, 3])
+        option = option_list[0]
+
+        if option == "mouse":
+            # try to display menu with right click, move through the items and exit
             pg.rightClick(x=x, y=y, duration=0.1)
             for _ in range(int(random.uniform(5, 20))):
                 key_name = random.choices(["down", "up", "left", "right"], [3, 1, 1, 1])
                 time.sleep(0.1)
-                pg.keyDown(key=key_name[0])
+                pg.press(keys=key_name[0])
 
             time.sleep(0.1)
-            pg.keyDown("escape")
-        else:
+            pg.press("escape")
+
+        elif option == "system":
+            #randomly interact with opened windows
             pg.leftClick(x=x, y=y, duration=0.1)
             for _ in range(int(random.uniform(5, 20))):
                 key_name = random.choices(["pagedown", "pageup", "up", "down", "left", "right", "home", "end"],
                                           [1, 1, 3, 3, 3, 3, 1, 1])
                 time.sleep(0.2)
-                pg.keyDown(key=key_name[0])
+                pg.press(keys=key_name[0])
+
+        elif option == "hotkey":
+            # 1. select a random application
+            pg.keyDown("alt")
+            n = random.randint(1, 10)
+            for _ in range(n):
+                pg.press(keys="tab")
+                pg.sleep(0.4)
+            pg.keyUp("alt")
+
+            # 2. apply a random set of key combinations
+            possible_keys = random.choices([["ctrl", "tab"],
+                                            ["ctrl", "win", "u"],
+                                            ["ctrl", "win", "i"],
+                                            ["ctrl", "win", "j"],
+                                            ["ctrl", "win", "k"],
+                                            ])
+            key_combination = possible_keys[0]
+            pg.hotkey(*key_combination)
 
 
 def get_files_iterator(path: str):
