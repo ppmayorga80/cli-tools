@@ -119,8 +119,6 @@ def main(**kwargs: Union[dict, list]):
 
     :param kwargs: if provided, is a list of parameters by docopt, otherwise, docopt will take them from sys.argv
     :type kwargs: Dict or List
-    :return:
-    :rtype:
     """
     args = docopt(doc=__doc__, **kwargs)
     dt = float(args["--dt"])
