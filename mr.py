@@ -79,6 +79,13 @@ class SystemState:
         t = random.uniform(0.061, 0.161)
         pg.moveRel(dx, dy, duration=t)
 
+    def select_random_app(self, n: int = 10):
+        pg.keyDown("alt")
+        for _ in range(random.randint(1, n)):
+            pg.press(keys="tab")
+            pg.sleep(0.4)
+        pg.keyUp("alt")
+
     def system_interation(self):
         x, y, _ = self.get_mouse_xy_and_time()
 
@@ -97,8 +104,10 @@ class SystemState:
             pg.press("escape")
 
         elif option == "system":
-            #randomly interact with opened windows
-            pg.leftClick(x=x, y=y, duration=0.1)
+            # randomly interact with opened windows
+            # pg.leftClick(x=x, y=y, duration=0.1)
+            self.select_random_app()
+
             for _ in range(int(random.uniform(5, 20))):
                 key_name = random.choices(["pagedown", "pageup", "up", "down", "left", "right", "home", "end"],
                                           [1, 1, 3, 3, 3, 3, 1, 1])
@@ -107,20 +116,27 @@ class SystemState:
 
         elif option == "hotkey":
             # 1. select a random application
-            pg.keyDown("alt")
-            n = random.randint(1, 10)
-            for _ in range(n):
-                pg.press(keys="tab")
-                pg.sleep(0.4)
-            pg.keyUp("alt")
+            self.select_random_app()
 
             # 2. apply a random set of key combinations
-            possible_keys = random.choices([["ctrl", "tab"],
-                                            ["ctrl", "win", "u"],
-                                            ["ctrl", "win", "i"],
-                                            ["ctrl", "win", "j"],
-                                            ["ctrl", "win", "k"],
-                                            ])
+            possible_keys = random.choices([
+                ["ctrl", "tab"],
+                ["ctrl", "win", "u"],
+                ["ctrl", "win", "i"],
+                ["ctrl", "win", "j"],
+                ["ctrl", "win", "k"],
+                ["ctrl", "win", "enter"],
+                ["ctrl", "win", "e"],
+                ["ctrl", "win", "r"],
+                ["ctrl", "win", "t"],
+                ["ctrl", "win", "d"],
+                ["ctrl", "win", "f"],
+                ["ctrl", "win", "g"],
+            ],
+                [
+                    35, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+                ]
+            )
             key_combination = possible_keys[0]
             pg.hotkey(*key_combination)
 
