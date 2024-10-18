@@ -1,0 +1,284 @@
+# import logging
+# import os
+# import jsons
+# import smart_open
+
+# from google.cloud import pubsub_v1
+# from computing_toolbox.utils.jsonl import Jsonl
+
+# from dai_data_tagger.utils.my_hotel_tagger import MyHotelTagger
+
+# hotels_tagger = MyHotelTagger()
+# logger = logging.getLogger()
+
+
+# class HotelRequest:
+#     details_path: str = None
+#     reviews_path: str = None
+#     tagged_path: str = None
+
+
+# def callback(message):
+#     # Parse pubsub message
+#     message_data = (message.data).decode("utf-8")
+#     try:
+#         hotel_request = jsons.loads(message_data, cls=HotelRequest)
+#     except Exception as e:
+#         logger.error(f'Error parsing pubsub message: {e}')
+#         return
+
+#     try:
+#         # Get details
+#         hotel_details = Jsonl.read(hotel_request.details_path)[0]
+#     except Exception as e:
+#         logger.error(
+#             f'Error getting hotel details from path {hotel_request.details_path}: {e}')
+#         return
+
+#     try:
+#         # Get reviews
+#         hotel_reviews = Jsonl.read(hotel_request.reviews_path)
+#         content = [r['content'] for r in hotel_reviews]
+#     except Exception as e:
+#         logger.error(
+#             f'Error getting hotel reviews from path {hotel_request.reviews_path}: {e}')
+#         return
+#     try:
+#         response = hotels_tagger.tag_list_of_reviews(
+#             hotel_name=hotel_details['name'],
+#             lat=hotel_details['location']['lat'],
+#             lon=hotel_details['location']['lon'],
+#             reviews=content
+#         )
+#     except Exception as e:
+#         logger.error(
+#             f'Error tagging hotel reviews for hotel {hotel_details["name"]}: {e}')
+#         return
+
+#     logger.info(hotel_request.tagged_path)
+
+#     # Save tagged reviews
+#     Jsonl.write(hotel_request.tagged_path, [response], tqdm_kwargs={})
+#     message.ack()
+
+
+# def run_subscription():
+#     print(os.getenv('GOOGLE_CLOUD_PROJECT'), os.getenv('HOTEL_TOPIC'))
+#     subscription_name = 'projects/{project_id}/subscriptions/{sub}'.format(
+#         project_id=os.getenv('GOOGLE_CLOUD_PROJECT'),
+#         sub=os.getenv('HOTEL_TOPIC') + '-sub',
+#     )
+
+#     with pubsub_v1.SubscriberClient() as subscriber:
+#         future = subscriber.subscribe(subscription_name, callback)
+#         try:
+#             future.result()
+#         except KeyboardInterrupt:
+#             future.cancel()
+import logging
+import os
+import jsons
+import smart_open
+
+from google.cloud import pubsub_v1
+from computing_toolbox.utils.jsonl import Jsonl
+
+from dai_data_tagger.utils.my_hotel_tagger import MyHotelTagger
+
+hotels_tagger = MyHotelTagger()
+logger = logging.getLogger()
+
+
+class HotelRequest:
+    details_path: str = None
+    reviews_path: str = None
+    tagged_path: str = None
+
+
+def callback(message):
+    # Parse pubsub message
+    message_data = (message.data).decode("utf-8")
+    try:
+        hotel_request = jsons.loads(message_data, cls=HotelRequest)
+    except Exception as e:
+        logger.error(f'Error parsing pubsub message: {e}')
+        return
+
+    try:
+        # Get details
+        hotel_details = Jsonl.read(hotel_request.details_path)[0]
+    except Exception as e:
+        logger.error(
+            f'Error getting hotel details from path {hotel_request.details_path}: {e}')
+        return
+
+    try:
+        # Get reviews
+        hotel_reviews = Jsonl.read(hotel_request.reviews_path)
+        content = [r['content'] for r in hotel_reviews]
+    except Exception as e:
+        logger.error(
+            f'Error getting hotel reviews from path {hotel_request.reviews_path}: {e}')
+        return
+    try:
+        response = hotels_tagger.tag_list_of_reviews(
+            hotel_name=hotel_details['name'],
+            lat=hotel_details['location']['lat'],
+            lon=hotel_details['location']['lon'],
+            reviews=content
+        )
+    except Exception as e:
+        logger.error(
+            f'Error tagging hotel reviews for hotel {hotel_details["name"]}: {e}')
+        return
+
+    logger.info(hotel_request.tagged_path)
+
+    # Save tagged reviews
+    Jsonl.write(hotel_request.tagged_path, [response], tqdm_kwargs={})
+    message.ack()
+
+
+def run_subscription():
+    print(os.getenv('GOOGLE_CLOUD_PROJECT'), os.getenv('HOTEL_TOPIC'))
+    subscription_name = 'projects/{project_id}/subscriptions/{sub}'.format(
+        project_id=os.getenv('GOOGLE_CLOUD_PROJECT'),
+        sub=os.getenv('HOTEL_TOPIC') + '-sub',
+    )
+
+    with pubsub_v1.SubscriberClient() as subscriber:
+        future = subscriber.subscribe(subscription_name, callback)
+        try:
+            future.result()
+        except KeyboardInterrupt:
+            future.cancel()
+"""
+Usage:
+    fix.py <FILE>
+"""
+import os
+import re
+from docopt import docopt
+
+def is_ok(content:str)->bool:
+    #1. check the number of #
+    response = re.findall(r"^#\s",content, re.MULTILINE)
+    if not response or len(response)!=3:
+        print("FILE>CONTENT Does not have 3 single #")
+        return False
+
+    #2. check the main titles
+    for title in ("# Question","# Long Answer","# Short Answer"):
+        response = re.findall(rf"^{title}$", content, re.MULTILINE)
+        if not response or len(response)!=1:
+            print(rf"FILE>CONTENT Does not have '{title}'")
+            return False
+
+    #3. check references
+    # response = re.findall(r"\[@[^@[]]\]", content, re.MULTILINE)
+    response = re.findall(r"\[@\]", content, re.MULTILINE)
+    print(response)
+    if response:
+        print(f"FILE>CONTENT contains references at {response[0]}")
+        return False
+
+    #4. check ::::
+    response = re.findall(r"^:{2,}|:{2,}$", content)
+    if response:
+        print(f"FILE>CONTENT contains many ::::::: at {response[0]}")
+        return False
+
+    
+    #5. check **
+    response = re.findall(r"^[^*]+*")
+    if response:
+        print(f"FILE>CONTENT contains unnecessary * at {response[0]}")
+        return False
+
+    return True
+
+def fix(content:str)->str:
+    new_content = ""
+    for line in content.split():
+        line2 = line.strip()
+        if new_content[-1] not in (r"\n",""):
+            new_content += f" {line2}"
+        else:
+            new_content += f"\n{line2}"
+
+    new_content = re.sub(r"\n+","\n",new_content,re.MULTILINE)
+    return new_content
+
+
+def main(file:str):
+    if not os.path.exists(file):
+        print(f"FILE: '{file}' doesn't exists")
+        return
+
+    content = open(file).read()
+    if not is_ok(content):
+        return
+
+    new_content = fix(content)
+    print(new_content)
+
+
+if __name__ == "__main__":
+    args = docopt(__doc__)
+    main(file=args["<FILE>"])
+"""
+Usage:
+    fix.py <FILE>
+"""
+import os
+import re
+from docopt import docopt
+
+def is_ok(content:str)->bool:
+    #1. check the number of #
+    response = re.findall(r"^#\s",content, re.MULTILINE)
+    if not response or len(response)!=3:
+        print("FILE>CONTENT Does not have 3 single #")
+        return False
+
+    #2. check the main titles
+    for title in ("# Question","# Long Answer","# Short Answer"):
+        response = re.findall(rf"^{title}$", content, re.MULTILINE)
+        if not response or len(response)!=1:
+            print(rf"FILE>CONTENT Does not have '{title}'")
+            return False
+
+    #3. check references
+    # response = re.findall(r"\[@[^@[]]\]", content, re.MULTILINE)
+    response = re.findall(r"\[@.*\]", content, re.MULTILINE)
+    if response:
+        print(f"FILE>CONTENT contains references at {response}")
+        return False
+
+    #4. check ::::
+    response = re.findall(r"^:{2,}|:{2,}$", content, re.MULTILINE)
+    if response:
+        print(f"FILE>CONTENT contains many colons at {response}")
+        return False
+
+    
+    #5. check **
+    ok_flag=True
+    for line in content.split():
+        if re.findall(r"^\*\*[^*]+\*\*", line):
+            continue
+        print(line)
+        response = re.findall(r"^.*\*.*$", line)
+        if response:
+            ok_flag=False
+            print(f"FILE>CONTENT contains unnecessary * at {response}")
+    if not ok_flag:
+        return False
+
+    return True
+
+def fix(content:str)->str:
+    new_content = ""
+    for line in content.split():
+        line2 = line.strip()
+        if new_content[-1] not in (r"\n",""):

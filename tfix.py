@@ -2,6 +2,7 @@
 
 Usage:
     fix.py [--inplace] [--force] <FILE>
+    fix.py eqn [--inplace] <FILE>
 
 Options:
     -i,--inplace    save the output in the same file (a backup is saved at /tmp)
@@ -10,7 +11,6 @@ Options:
 import os
 import re
 import tempfile
-from itertools import count
 
 from docopt import docopt
 
@@ -118,7 +118,7 @@ def print_content(content: str):
         print(line_k)
 
 
-def main(file: str, inplace: bool = False, force: bool = False):
+def tfix(file: str, inplace: bool = False, force: bool = False):
     if not os.path.exists(file):
         print(f"FILE: '{file}' doesn't exists")
         return
@@ -139,6 +139,26 @@ def main(file: str, inplace: bool = False, force: bool = False):
 
     print_content(new_content)
 
+def tfix_eqn(file: str, inplace: bool = False, force: bool = False):
+    if not os.path.exists(file):
+        print(f"FILE: '{file}' doesn't exists")
+        return
+
+    with open(file, "r") as fp:
+        content = fp.read()
+        content = content.replace("\(", "$")
+        content = content.replace("\)", "$")
+        content = content.replace("\[", "$$")
+        content = content.replace("\]", "$$")
+
+    if inplace:
+        with open(file, "w") as fp:
+            fp.write(content)
+        with tempfile.NamedTemporaryFile("w", delete=False) as fp:
+            print(f"BACKUP TEMPFILE: {fp.name}")
+            fp.write(content)
+
+    print_content(content)
 
 def poc1():
     is_valid = is_ok("""
@@ -159,7 +179,15 @@ def poc1():
     print(is_valid)
 
 
+def main():
+    args = docopt(__doc__)
+
+    if args["eqn"]:
+        #fix equations
+        tfix_eqn(file=args["<FILE>"], inplace=args["--inplace"], force=args["--force"])
+    else:
+        tfix(file=args["<FILE>"], inplace=args["--inplace"], force=args["--force"])
+
 if __name__ == "__main__":
     # poc1()
-    args = docopt(__doc__)
-    main(file=args["<FILE>"], inplace=args["--inplace"], force=args["--force"])
+    main()

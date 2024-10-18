@@ -28,9 +28,10 @@ setup(
             'pyqr = pyqr:main',
             'img2aa = img2aa:main',
             'ro3 = ro3:main',
-            'tout = tout:main',
-            'arxiv = arxiv:main',
+            'out = out:main',
             'mr = mr:main',
+            'arxiv = arxiv:main',
+            'tfix = tfix:main',
         ],
     },
     # needs to be installed along with your package. Eg: 'caer'

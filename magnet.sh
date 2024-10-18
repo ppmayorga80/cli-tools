@@ -6,7 +6,8 @@
 
 #1. get screen size
 W=$(xwininfo -root | grep "Width" | awk -F: '{print $2}')
-H=$(xwininfo -root | grep "Height" | awk -F: '{print $2}')
+#H=$(xwininfo -root | grep "Height" | awk -F: '{print $2}')
+H=$(xprop -root _NET_WORKAREA | awk -F, '{print $4}')
 
 #compute new size and position
 if [[ $1 == "f" ]]; then
@@ -107,10 +108,17 @@ elif [[ $1 == "23r" ]]; then
 	Y2=0
 fi
 
+if [[ $2 == "-v" ]];then
+	echo "${W}x${H}+0x0 -> ${W2}x${H2}+${X2}x${Y2})"
+fi
+
 #removes window property that prevents xdotool works
 wmctrl -r :ACTIVE: -b remove,maximized_vert,maximized_horz
 wmctrl -r :ACTIVE: -b remove,above,below
 wmctrl -r :ACTIVE: -b remove,fullscreen
+
 #resize and move the window
 xdotool getactivewindow windowsize $W2 $H2
 xdotool getactivewindow windowmove $X2 $Y2
+
+#wmctrl -r :ACTIVE: -e 0,$X2,$Y2,$W2,$H2
