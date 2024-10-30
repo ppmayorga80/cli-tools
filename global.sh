@@ -20,12 +20,59 @@ fi
 #     / /| | / / / __ '/ ___/ _ \/ ___/
 #    / ___ |/ / / /_/ (__  )  __(__  ) 
 #   /_/  |_/_/_/\__,_/____/\___/____/  
-#                                      
 # -------------------------------------
 alias tm0='tmux a -t0'
 alias tm1='tmux a -t1'
 alias tm2='tmux a -t2'
 alias tm3='tmux a -t3'
+alias logout="[[ -o login ]] && logout || qdbus org.kde.ksmserver /KSMServer logout 0 0 1"
+
+#       __                        __ 
+#      / /___  ____ _____  __  __/ /_
+#     / / __ \/ __ '/ __ \/ / / / __/
+#    / / /_/ / /_/ / /_/ / /_/ / /_  
+#   /_/\____/\__, /\____/\__,_/\__/  
+#           /____/                   
+# -----------------------------------
+function my_logout {
+    #[[ -o login ]] && logout || qdbus org.kde.ksmserver /KSMServer logout 0 0 1
+    #qdbus org.kde.ksmserver /KSMServer logout 0 0 1
+    #gnome-session-quit --no-prompt
+    loginctl terminate-user $USER
+}
+
+#      __                
+#     / /_____ ___  _____
+#    / __/ __ '__ \/ ___/
+#   / /_/ / / / / / /    
+#   \__/_/ /_/ /_/_/     
+# -----------------------
+function tmr {
+    ARGUMENTS="$@"
+    if [[ $ARGUMENTS == "" ]]; then
+        ARGUMENTS="-ms"
+    fi
+
+    PSID=$(ps -lea | grep mr | awk -F' ' '{print $4}')
+
+    if [[ $ARGUMENTS == "-v" ]]; then
+        if [[ $PSID == "" ]]; then
+            echo "mr is NOT RUNNING 😴"
+        else
+            echo "mr is RUNNING with PSID=$PSID 😎😎😎"
+        fi
+    else
+        if [[ $PSID == "" ]]; then
+            echo "Starting mr command with $ARGUMENTS" 
+            nohup mr "$ARGUMENTS" &        
+            PSID=$(ps -lea | grep mr | awk -F' ' '{print $4}')
+            echo "mr is running now with PSID=$PSID 😎😎😎"
+        else
+            echo "Killing PSID=$PSID 🛑"
+            kill $PSID
+        fi
+    fi
+}
 
 
 #                  __ 
@@ -33,11 +80,40 @@ alias tm3='tmux a -t3'
 #    / __ \/ / / / __/
 #   / /_/ / /_/ / /_  
 #   \____/\__,_/\__/  
-#                     
 # --------------------
-function out {
-    tout $@
-    gnome-session-quit --no-prompt
+function tout {
+    #default arguments
+    ARGUMENTS="$@"
+    if [[ $ARGUMENTS == "" ]]; then
+        H=$((1+$RANDOM%2))
+        M=$((15+$RANDOM%30))
+        S=$((15+$RANDOM%30))
+
+        ARGUMENTS="$H:$M:$S"
+    fi
+
+    #tmux project name
+    PSID=$(ps -lea | grep out | awk -F' ' '{print $4}')
+    SESSION_NAME="timer"
+
+    #decide if we attach or create a new tmux session
+    tmux has-session -t $SESSION_NAME 2>/dev/null
+    if [ "$?" -eq 1 ] ; then
+        e1="loginctl terminate-user $USER"
+        e2="gnome-session-quit --no-prompt"
+        echo "No Session found.  Creating and executing."
+        if [[ $XDG_CURRENT_DESKTOP == "KDE" ]]; then
+            echo "Session executed in KDE"
+            tmux new-session -d -s $SESSION_NAME "out $ARGUMENTS && ${e1}"
+        else
+            echo "Session executed in GNOME"
+            tmux new-session -d -s $SESSION_NAME "out $ARGUMENTS && ${e1} || ${e2}"
+        fi
+    else
+        echo "Session found."
+    fi
+    echo "Connecting to session: $SESSION_NAME"
+    tmux attach-session -t $SESSION_NAME
 }
 
 

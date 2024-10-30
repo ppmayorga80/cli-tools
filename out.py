@@ -1,22 +1,22 @@
-"""logout app
+"""timer out app
 
 Usage:
-    tout.py [--accelerate=K] [--progress] <SECONDS>
+    out.py [--accelerate=K] [--no-progress] <SECONDS>
 
 Arguments:
     <SECONDS>   the number of seconds to wait before logout, use the format
                 S or M:S or H:M:S
 
 Options:
-    -p, --progress  show a progress bar
+    -n, --no-progress   hide the progress bar
     -a,--accelerate=K   speed up the timer [default: 1.0]
 
 
 Examples:
-    tout.py 3601    #1hr + 1 sec
-    tout.py 1:12    #1min + 12 sec
-    tout.py 0:1:12  #1min + 12 sec
-    tout.py 1:2:3   #1hr + 2 min + 3 sec
+    out.py 3601    #1hr + 1 sec
+    out.py 1:12    #1min + 12 sec
+    out.py 0:1:12  #1min + 12 sec
+    out.py 1:2:3   #1hr + 2 min + 3 sec
 """
 import os
 import re
@@ -53,7 +53,7 @@ def main(**kwargs: dict or list):
             else:
                raise ValueError(f"<SECONDS> argument is not valid")
 
-    if not args["--progress"]:
+    if args["--no-progress"]:
         time.sleep(seconds)
     else:
         h, m, s = sec2time(seconds)
