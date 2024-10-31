@@ -53,7 +53,7 @@ function tmr {
         ARGUMENTS="-ms"
     fi
 
-    PSID=$(ps -lea | grep mr | awk -F' ' '{print $4}')
+    PSID=$(pgrep -f mr | xargs ps -fp | grep -E "\bmr\b" | awk -F' ' '{print $2}')
 
     if [[ $ARGUMENTS == "-v" ]]; then
         if [[ $PSID == "" ]]; then
@@ -93,21 +93,28 @@ function tout {
     fi
 
     #tmux project name
-    PSID=$(ps -lea | grep out | awk -F' ' '{print $4}')
+    PSID=$(pgrep -f out | xargs ps -fp | grep -E "\bout\b" | awk -F' ' '{print $2}')
     SESSION_NAME="timer"
 
     #decide if we attach or create a new tmux session
     tmux has-session -t $SESSION_NAME 2>/dev/null
     if [ "$?" -eq 1 ] ; then
-        e1="loginctl terminate-user $USER"
-        e2="gnome-session-quit --no-prompt"
-        echo "No Session found.  Creating and executing."
-        if [[ $XDG_CURRENT_DESKTOP == "KDE" ]]; then
-            echo "Session executed in KDE"
+        IS_MACOS=$(neofetch | grep OS | grep -oh macOS)
+        if [[ $IS_MACOS ]]; then
+            e1="osascript -e 'tell application \"loginwindow\" to  «event aevtrlgo»'"
+            echo "Session executed in MAC OS"
             tmux new-session -d -s $SESSION_NAME "out $ARGUMENTS && ${e1}"
         else
-            echo "Session executed in GNOME"
-            tmux new-session -d -s $SESSION_NAME "out $ARGUMENTS && ${e1} || ${e2}"
+          e1="loginctl terminate-user $USER"
+          e2="gnome-session-quit --no-prompt"
+          echo "No Session found.  Creating and executing."
+          if [[ $XDG_CURRENT_DESKTOP == "KDE" ]]; then
+              echo "Session executed in KDE"
+              tmux new-session -d -s $SESSION_NAME "out $ARGUMENTS && ${e1}"
+          else
+              echo "Session executed in GNOME"
+              tmux new-session -d -s $SESSION_NAME "out $ARGUMENTS && ${e1} || ${e2}"
+          fi
         fi
     else
         echo "Session found."

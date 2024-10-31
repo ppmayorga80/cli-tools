@@ -29,7 +29,6 @@ setup(
             'img2aa = img2aa:main',
             'ro3 = ro3:main',
             'xlscat = xlscat:main',
-
             'out = out:main',
             'mr = mr:main',
             'arxiv = arxiv:main',
