@@ -11,8 +11,10 @@ Options:
 """
 
 import os
+import sys
 import time
 import random
+from collections import defaultdict
 
 from typing import Union
 
@@ -35,6 +37,15 @@ class SystemState:
         self.t0 = 0
 
         self.idle_dt = idle_dt
+
+        special_key_by_platform = defaultdict(lambda: "win")
+        special_key_by_platform["darwin"] = "command"
+        special_key_by_platform["linux"] = "win"
+        special_key_by_platform["windows"] = "win"
+        alt_key_by_platform = defaultdict(lambda: "alt")
+        alt_key_by_platform["darwin"] = "command"
+        self.special_key = special_key_by_platform[sys.platform]
+        self.alt_key = alt_key_by_platform[sys.platform]
 
         self.update()
 
@@ -80,11 +91,11 @@ class SystemState:
         pg.moveRel(dx, dy, duration=t)
 
     def select_random_app(self, n: int = 10):
-        pg.keyDown("alt")
+        pg.keyDown(self.alt_key)
         for _ in range(random.randint(1, n)):
             pg.press(keys="tab")
             pg.sleep(0.4)
-        pg.keyUp("alt")
+        pg.keyUp(self.alt_key)
 
     def system_interation(self):
         x, y, _ = self.get_mouse_xy_and_time()
@@ -121,17 +132,17 @@ class SystemState:
             # 2. apply a random set of key combinations
             possible_keys = random.choices([
                 ["ctrl", "tab"],
-                ["ctrl", "win", "u"],
-                ["ctrl", "win", "i"],
-                ["ctrl", "win", "j"],
-                ["ctrl", "win", "k"],
-                ["ctrl", "win", "enter"],
-                ["ctrl", "win", "e"],
-                ["ctrl", "win", "r"],
-                ["ctrl", "win", "t"],
-                ["ctrl", "win", "d"],
-                ["ctrl", "win", "f"],
-                ["ctrl", "win", "g"],
+                ["ctrl", self.special_key, "u"],
+                ["ctrl", self.special_key, "i"],
+                ["ctrl", self.special_key, "j"],
+                ["ctrl", self.special_key, "k"],
+                ["ctrl", self.special_key, "enter"],
+                ["ctrl", self.special_key, "e"],
+                ["ctrl", self.special_key, "r"],
+                ["ctrl", self.special_key, "t"],
+                ["ctrl", self.special_key, "d"],
+                ["ctrl", self.special_key, "f"],
+                ["ctrl", self.special_key, "g"],
             ],
                 [
                     35, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
