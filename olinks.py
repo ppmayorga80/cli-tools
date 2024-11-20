@@ -11,7 +11,7 @@ def clean_string(text):
 
 
 def text_to_valid_urls(content):
-    lines = [f"http{x}" for x in content.split("http")]
+    lines = [f"http{x}" for x in re.split(r"http|,|\s+",content)]
     lines = [xk.strip() for x in lines for xk in x.split("\n")]
     lines = [clean_string(x) for x in lines]
 
