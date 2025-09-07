@@ -3,16 +3,17 @@
 Change EC2 instance type based on schedule.
 
 Usage:
-  ec2_type_switcher.py --instance-id=<id> --csv=<path> --region=<region> [--default-type=<type>] [--profile=<profile>] [--dry-run]
+  ec2_type_switcher.py --instance-id=<id> [--csv=<path>] [--region=<region>] [--default-type=<type>] [--profile=<profile>] [--dry-run]
 
 Options:
-  --instance-id=<id>      EC2 instance ID (e.g., i-0123456789abcdef0)
-  --csv=<path>            Path to schedule CSV file [default: ec2_schedule.csv]
+  -i,--instance-id=<id>      EC2 instance ID (e.g., i-0123456789abcdef0)
+  --csv=<path>            Path to schedule CSV file [default: DEFAULT]
   --region=<region>       AWS region (e.g., us-east-1) [default: us-east-1]
   --default-type=<type>   Default instance type [default: t2.micro]
   --profile=<profile>     AWS CLI profile to use
   --dry-run               Simulate changes without applying them
 """
+import os.path
 
 import pandas as pd
 from datetime import datetime
@@ -142,6 +143,9 @@ def main():
     default_type = args["--default-type"]
     profile = args["--profile"]
     dry_run = args["--dry-run"]
+
+    if csv_path=="DEFAULT":
+        csv_path = os.path.join(os.path.dirname(__file__),"ec2_schedule.csv")
 
     if profile:
         boto3.setup_default_session(profile_name=profile, region_name=region)
