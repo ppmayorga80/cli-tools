@@ -5,10 +5,8 @@ import seaborn as sns
 def prepare_summary(df):
     df['day'] = df['sign_in'].dt.day
     df['hour'] = df['sign_in'].dt.hour
-
     summary = df.groupby(['day', 'hour']).size().unstack(fill_value=0)
     summary = summary.sort_index().sort_index(axis=1)
-
     return summary
 
 def align_date_range(df1, df2):
@@ -23,17 +21,30 @@ def align_date_range(df1, df2):
 
     return df1_filtered, df2_filtered
 
-def plot_all(df_cli, df_usr):
-    # Align both to common date range
+def plot_merged_only(df_cli, df_usr):
     df_cli, df_usr = align_date_range(df_cli, df_usr)
     df_merged = pd.concat([df_cli, df_usr], ignore_index=True)
 
-    # Prepare summaries
+    summary_merged = prepare_summary(df_merged)
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(summary_merged, cmap='viridis', linewidths=0.5, linecolor='gray')
+    plt.title('Sign-ins (Clients + Users)', fontsize=14)
+    plt.xlabel('Hour of Day')
+    plt.ylabel('Day of Month')
+    plt.xticks(rotation=0)
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+    plt.show()
+
+def plot_all(df_cli, df_usr):
+    df_cli, df_usr = align_date_range(df_cli, df_usr)
+    df_merged = pd.concat([df_cli, df_usr], ignore_index=True)
+
     summary_cli = prepare_summary(df_cli)
     summary_usr = prepare_summary(df_usr)
     summary_merged = prepare_summary(df_merged)
 
-    # Unified color scale
     combined = pd.concat([
         summary_cli.stack(),
         summary_usr.stack(),
@@ -42,8 +53,7 @@ def plot_all(df_cli, df_usr):
     v_min = combined.min()
     v_max = combined.max()
 
-    # Plotting
-    fig, axes = plt.subplots(1, 3, figsize=(30, 8))  # 1 row, 3 columns
+    fig, axes = plt.subplots(1, 3, figsize=(30, 8))
 
     sns.heatmap(summary_cli, cmap='viridis', linewidths=0.5, linecolor='gray',
                 ax=axes[0], vmin=v_min, vmax=v_max)
@@ -76,4 +86,19 @@ if __name__ == '__main__':
     df1 = pd.read_csv("/Users/pedro/Downloads/dt-clients.csv")
     df2 = pd.read_csv("/Users/pedro/Downloads/dt-users.csv")
 
-    plot_all(df_cli=df1, df_usr=df2)
+    # Convert sign_in to datetime if not already parsed
+    df1['sign_in'] = pd.to_datetime(df1['sign_in'])
+    df2['sign_in'] = pd.to_datetime(df2['sign_in'])
+
+    # ✅ Filter from a specific start date
+    start_filter = pd.to_datetime("2025-01-01")
+    df1 = df1[df1['sign_in'] >= start_filter].copy()
+    df2 = df2[df2['sign_in'] >= start_filter].copy()
+
+    # ✅ Change this to control plotting behavior
+    plot_all_flag = False  # Set to False to show only the merged df heatmap
+
+    if plot_all_flag:
+        plot_all(df_cli=df1, df_usr=df2)
+    else:
+        plot_merged_only(df_cli=df1, df_usr=df2)
