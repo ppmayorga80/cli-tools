@@ -6,6 +6,7 @@ Usage:
   ec2_type_switcher.py --instance-id=<id> --type=<type> [--dry-run]
   ec2_type_switcher.py --instance-id=<id> --csv=<path> [--dry-run]
   ec2_type_switcher.py --manual | --auto | --mode
+  ec2_type_switcher.py --instance-id=<id> --query
 
 Options:
   -i,--instance-id=<id>   EC2 instance ID (e.g., i-0123456789abcdef0)
@@ -15,6 +16,7 @@ Options:
   -m,--manual             Set S3 mode to manual and exit (writes s3://mis15tours/ec2_mode.json -> {"mode":"manual"})
   -a,--auto               Set S3 mode to auto and exit (writes s3://mis15tours/mode.json -> {"mode":"auto"})
   -r,--mode               Get S3 mode and exit (reads s3://mis15tours/mode.json)
+  --query                 Print current instance type and exit
 
 CSV mode guard:
   CSV mode (no --type) will ONLY run if s3://mis15tours/ec2_mode.json contains {"mode":"auto"}.
@@ -195,6 +197,15 @@ def main():
     flag_manual = args["--manual"]
     flag_auto = args["--auto"]
     flag_mode = args["--mode"]
+    flag_query = args["--query"]
+
+    if flag_query:
+        if not instance_id:
+            raise SystemExit("You must provide --instance-id with --query.")
+        ec2 = boto3.client("ec2", region_name="us-east-1")
+        desc = get_instance_description(ec2, instance_id)
+        print(f"[INFO] Instance {instance_id} type is: {desc['InstanceType']}")
+        return
 
     if flag_manual and flag_auto:
         raise SystemExit("Provide only one of --manual or --auto, not both.")
