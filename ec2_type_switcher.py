@@ -3,13 +3,13 @@
 Change EC2 instance type based on schedule or manual override.
 
 Usage:
-  ec2_type_switcher.py --instance-id=<id> --type=<type> [--dry-run]
-  ec2_type_switcher.py --instance-id=<id> --csv=<path> [--dry-run]
+  ec2_type_switcher.py [--instance-id=<id>] --type=<type> [--dry-run]
+  ec2_type_switcher.py [--instance-id=<id>] --csv=<path> [--dry-run]
   ec2_type_switcher.py --manual | --auto | --mode
-  ec2_type_switcher.py --instance-id=<id> --query
+  ec2_type_switcher.py [--instance-id=<id>] --query
 
 Options:
-  -i,--instance-id=<id>   EC2 instance ID (e.g., i-0123456789abcdef0)
+  -i,--instance-id=<id>   EC2 instance ID (e.g., i-0123456789abcdef0) [default: i-0f9a79684854379b0]
   -t,--type=<type>        Manually set the instance type (overrides schedule), e.g., t2.small
   --csv=<path>            Path to schedule CSV file [default: DEFAULT]
   --dry-run               Simulate changes without applying them
