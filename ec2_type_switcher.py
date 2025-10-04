@@ -54,6 +54,7 @@ def set_auto_mode():
         data = json.dumps({"mode": "auto"})
         f.write(data)
 
+
 def get_mode():
     with smart_open.open(S3_PATH, "r") as f:
         try:
@@ -62,6 +63,7 @@ def get_mode():
         except Exception as e:
             print(f"Can't parse '{S3_PATH}': {e}")
     return ""
+
 
 def can_run_in_automatic():
     with smart_open.open(S3_PATH, "r") as f:
@@ -105,6 +107,9 @@ def desired_type_for_now(df: pd.DataFrame, default_type: str, now_dt: datetime) 
     matches = df[df["Day"] == today]
     for _, row in matches.iterrows():
         if row["Start"] <= now_t <= row["End"]:
+            val = row["EC2_Type"].strip().lower()
+            if val in {"stop", "nan", ""}:
+                return "STOP"
             return row["EC2_Type"]
     return default_type
 
@@ -186,6 +191,27 @@ def stop_modify_start(ec2, instance_id: str, current_type: str, new_type: str, d
         print("[INFO] Instance is now running.")
 
 
+def stop_instance(ec2, instance_id: str, dry_run: bool):
+    desc = get_instance_description(ec2, instance_id)
+    state = desc["State"]["Name"]
+
+    if state not in ("stopped", "stopping"):
+        print(f"[INFO] Stopping instance {instance_id} (state: {state})...")
+        try:
+            ec2.stop_instances(InstanceIds=[instance_id], DryRun=dry_run)
+        except ClientError as e:
+            if e.response["Error"].get("Code") == "DryRunOperation":
+                print("[DRY-RUN] stop_instances OK (simulated).")
+            else:
+                raise
+        if not dry_run:
+            waiter = ec2.get_waiter("instance_stopped")
+            waiter.wait(InstanceIds=[instance_id])
+            print("[INFO] Instance stopped.")
+    else:
+        print(f"[INFO] Instance already stopping/stopped: {state}")
+
+
 # ---------- main ----------
 def main():
     args = docopt(__doc__)
@@ -223,8 +249,6 @@ def main():
         print(f"[INFO] Current Mode is: '{current_mode}'")
         return
 
-
-
     ec2 = boto3.client("ec2", region_name="us-east-1")
 
     # Determine desired type: manual override > schedule (CSV) > default
@@ -253,13 +277,21 @@ def main():
     print(f"[INFO] Current time: {now_log.isoformat()} (America/Monterrey)")
     print(f"[INFO] Current type: {current_type} | Desired type: {desired_type} (source: {source})")
 
+    # Handle STOP case from schedule
+    if desired_type == "STOP":
+        print("[INFO] Schedule requests STOP. Stopping instance...")
+        stop_instance(ec2, instance_id, dry_run)
+        print("[DONE] Instance stopped per schedule.")
+        return
+
     if desired_type == current_type:
         print("[INFO] No change required.")
         return
 
     if is_in_asg(inst):
         raise SystemExit(
-            "The instance belongs to an Auto Scaling Group; modify the Launch Template/Configuration instead.")
+            "The instance belongs to an Auto Scaling Group; modify the Launch Template/Configuration instead."
+        )
 
     ok, msg = ensure_compatible(desired_type, inst, ec2)
     if not ok:

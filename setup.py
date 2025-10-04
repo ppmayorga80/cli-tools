@@ -34,6 +34,8 @@ setup(
             'arxiv = arxiv:main',
             'tfix = tfix:main',
             'ec2 = ec2_type_switcher:main',
+            'imcut = imcut:main',
+            'csvobf = csvobf:main',
         ],
     },
     # needs to be installed along with your package. Eg: 'caer'
