@@ -243,7 +243,10 @@ def main():
             "terminated": "💔⚰️",
         }
         instance_flag = possible_flags.get(instance_state, "")
-        print(f"[INFO] Instance {instance_id} type is: {instance_type}, state is: {instance_state} {instance_flag}")
+        print(f"[INFO] EC2")
+        print(f"       ID:    {instance_id}")
+        print(f"       Type:  {instance_type}")
+        print(f"       State: {instance_state} {instance_flag}")
         return
 
     if flag_manual and flag_auto:
@@ -298,7 +301,23 @@ def main():
         return
 
     if desired_type == current_type:
-        print("[INFO] No change required.")
+        state = inst["State"]["Name"]
+        print(f"[INFO] No type change required (current type = desired type).")
+        if state == "stopped":
+            print(f"[INFO] Instance is stopped. Starting instance {instance_id}...")
+            try:
+                ec2.start_instances(InstanceIds=[instance_id], DryRun=dry_run)
+            except ClientError as e:
+                if e.response["Error"].get("Code") == "DryRunOperation":
+                    print("[DRY-RUN] start_instances OK (simulated).")
+                else:
+                    raise
+            if not dry_run:
+                waiter = ec2.get_waiter("instance_running")
+                waiter.wait(InstanceIds=[instance_id])
+                print("[INFO] Instance is now running.")
+        else:
+            print(f"[INFO] Instance is already {state}. No action taken.")
         return
 
     if is_in_asg(inst):
