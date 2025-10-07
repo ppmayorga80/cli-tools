@@ -39,7 +39,7 @@ FAMILY_ARCH = {
     "t3a": "x86_64",
     "t4g": "arm64",
 }
-
+DEFAULT_TYPE = "t2.micro"
 S3_PATH = "s3://mis15tours/ec2_mode.json"
 
 
@@ -69,7 +69,7 @@ def can_run_in_automatic():
     with smart_open.open(S3_PATH, "r") as f:
         try:
             data = json.loads(f.read())
-            if data.get["mode"] == "auto":
+            if data.get("mode", "") == "auto":
                 return True
         except Exception as e:
             print(f"Can't parse '{S3_PATH}': {e}")
@@ -224,6 +224,8 @@ def main():
     flag_auto = args["--auto"]
     flag_mode = args["--mode"]
     flag_query = args["--query"]
+
+    default_type = DEFAULT_TYPE
 
     if flag_query:
         if not instance_id:
