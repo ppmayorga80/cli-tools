@@ -232,7 +232,18 @@ def main():
             raise SystemExit("You must provide --instance-id with --query.")
         ec2 = boto3.client("ec2", region_name="us-east-1")
         desc = get_instance_description(ec2, instance_id)
-        print(f"[INFO] Instance {instance_id} type is: {desc['InstanceType']}")
+        instance_type = desc.get("InstanceType","Unknown")
+        instance_state = desc.get("State",{}).get("Name","Unknown").lower()
+        possible_flags = {
+            "running": "🟢✨",
+            "stopped": "🔴",
+            "pending": "🔶🔶🔶",
+            "stopping": "🔻🔻🔻",
+            "shutting-down":"🪦",
+            "terminated": "☢️🪦",
+        }
+        instance_flag = possible_flags.get(instance_state, "")
+        print(f"[INFO] Instance {instance_id} type is: {instance_type}, state is: {instance_state} {instance_flag}")
         return
 
     if flag_manual and flag_auto:
