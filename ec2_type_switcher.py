@@ -237,10 +237,10 @@ def main():
         possible_flags = {
             "running": "🟢✨",
             "stopped": "🔴",
-            "pending": "🔶🔶🔶",
-            "stopping": "🔻🔻🔻",
-            "shutting-down":"🪦",
-            "terminated": "☢️🪦",
+            "pending": "🟡🟡🟡",
+            "stopping": "🟣🟣🟣",
+            "shutting-down":"☢️",
+            "terminated": "💔⚰️",
         }
         instance_flag = possible_flags.get(instance_state, "")
         print(f"[INFO] Instance {instance_id} type is: {instance_type}, state is: {instance_state} {instance_flag}")
