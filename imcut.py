@@ -23,53 +23,53 @@ from typing import Optional
 from PIL import ImageGrab, Image
 import random
 
-DEFAULT_DIRNAME = os.path.join(os.environ['HOME'], "Downloads")
+DEFAULT_DIRNAME = os.path.join(os.environ["HOME"], "Downloads")
 
 
 def get_pb_image() -> Optional[np.ndarray]:
     """Get an image from the clipboard and return as an OpenCV BGR numpy array."""
     img = ImageGrab.grabclipboard()
-
-    if isinstance(img, Image.Image):  # check if it's a valid PIL image
-        # Convert to numpy array
+    if isinstance(img, Image.Image):
         img_np = np.array(img)
-
-        # Convert RGB -> BGR (since OpenCV uses BGR)
-        img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-        return img_cv
+        return cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
     return None
 
 
 def get_image(args):
     img = None
-    if args['<INPUT>'] is not None:
-        try:
-            img = cv2.imread(args["<INPUT>"])
-        except Exception as e:
-            print(f"'{args['<INPUT>']}' is not a valid image.'", sys.stderr)
-            print(f"{e}", sys.stderr)
-            exit(1)
-    elif args['--pbcopy']:
+    if args["<INPUT>"] and os.path.exists(args["<INPUT>"]):
+        img = cv2.imread(args["<INPUT>"])
+    elif args["--pbcopy"]:
         img = get_pb_image()
     if img is None:
-        print(f"--pbcopy is not a valid image.'", sys.stderr)
-        exit(1)
+        print("❌ No valid image (--pbcopy or <INPUT> required).", file=sys.stderr)
+        sys.exit(1)
     return img
 
 
 def get_heights(args, img) -> tuple[int, int]:
-    hs = [eval(s.strip()) for s in args['--height'].split(',')]
-    for i in range(len(hs)):
-        if isinstance(hs[i], float):
-            hs[i] = int(hs[i] * img.shape[0])
-        if hs[i] < 0:
-            hs[i] += img.shape[0]
-    return hs
+    """Parse --height argument (support one or two values)."""
+    hs = [eval(s.strip()) for s in args["--height"].split(",")]
+    if len(hs) == 1:
+        hs = [hs[0], hs[0]]
+
+    H = img.shape[0]
+    h1, h2 = hs
+    if isinstance(h1, float):
+        h1 = int(h1 * H)
+    if isinstance(h2, float):
+        h2 = int(h2 * H)
+    if h1 < 0:
+        h1 += H
+    if h2 < 0:
+        h2 += H
+    return min(h1, h2), max(h1, h2)
 
 
-def get_cut_heights(args, img) -> list[tuple[int, int]]:
-    w = eval(args['--cut'])
-    n = eval(args['--cut-count'])
+def get_cut_heights(args, img) -> tuple[list[tuple[int, int]], int]:
+    """Generate random vertical cut offsets across the image width."""
+    w = eval(args["--cut"])
+    n = eval(args["--cut-count"])
     if isinstance(w, float):
         w = int(w * img.shape[0])
     if isinstance(n, float):
@@ -79,81 +79,91 @@ def get_cut_heights(args, img) -> list[tuple[int, int]]:
         (random.randint(-w, w), int(ci))
         for _, ci in enumerate(np.linspace(0, img.shape[1] - 1, n + 1))
     ]
-    return rc
+    return rc, abs(w)
 
 
-def get_paths(args, n) -> tuple:
-    dirname = os.path.dirname(args['--output'])
+def get_paths(args) -> tuple[str, str, str]:
+    dirname = os.path.dirname(args["--output"])
     if not dirname:
-        dirname = os.path.dirname(args['<INPUT>'] or "")
+        dirname = os.path.dirname(args["<INPUT>"] or "")
         if not dirname:
             dirname = DEFAULT_DIRNAME
 
-    base = os.path.basename(args['--output'])
+    base = os.path.basename(args["--output"])
     filename, ext = os.path.splitext(base)
+    return (
+        os.path.join(dirname, f"{filename}-top{ext}"),
+        os.path.join(dirname, f"{filename}-middle{ext}"),
+        os.path.join(dirname, f"{filename}-bottom{ext}"),
+    )
 
-    p = tuple([
-        os.path.join(dirname, f"{filename}-{k}{ext}")
-        for k in range(n)
-    ])
-    return p
 
-
-def split_image(img, h, rc):
-    mp = max([r for r, c in rc])
-    mn = -min([r for r, c in rc])
-
-    if len(img.shape) == 1:
-        I = cv2.cvtColor(img, cv2.COLOR_GRAY2BGRA)
-    elif len(img.shape) == 3:
-        I = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
-    elif len(img.shape) == 4:
-        I = img
-    else:
-        I = img
-
-    img_top = I[0:h + mn, :].copy()
-    img_bottom = I[h + 1 - mp:, :].copy()
-
-    r00, c0 = h + rc[0][0], rc[0][1]
+def draw_cut(mask, base_h, rc):
+    """Draw a wavy cut contour into a binary mask (bottom side of mask = 0)."""
+    H, W = mask.shape
+    r00, c0 = base_h + rc[0][0], rc[0][1]
     for dri, ci in rc[1:]:
-        ri0 = h + dri
+        ri0 = base_h + dri
         li0_fn = lambda x: (ri0 - r00) / (ci - c0) * (x - c0) + r00
         for x in range(c0, ci + 1):
-            y0 = int(li0_fn(x))
-            y1 = y0 - h + mn
-            img_top[y0:, x] = 0
-            img_bottom[:y1, x] = 0
+            y = int(li0_fn(x))
+            if 0 <= y < H:
+                mask[y:, x] = 0
         r00, c0 = ri0, ci
 
-    return img_top, img_bottom
+
+def split_image_band(img, h1: int, h2: int, rc, w: int):
+    """Split image into top/middle/bottom with cuts included."""
+    H, W = img.shape[:2]
+    I = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+
+    # masks for cuts
+    mask_top = np.ones((H, W), dtype=np.uint8) * 255
+    mask_bottom = np.ones((H, W), dtype=np.uint8) * 255
+
+    draw_cut(mask_top, h1, rc)
+    draw_cut(mask_bottom, h2, rc)
+
+    # Use masks to separate
+    top_part = cv2.bitwise_and(I, I, mask=mask_top)
+    bottom_mask = cv2.bitwise_not(mask_bottom)
+    bottom_part = cv2.bitwise_and(I, I, mask=bottom_mask)
+    mid_mask = cv2.bitwise_not(mask_top) & mask_bottom
+    mid_part = cv2.bitwise_and(I, I, mask=mid_mask)
+
+    # Include the wavy band (±w) inside each cropped region
+    y_top1 = 0
+    y_top2 = min(H, h1 + w)
+    y_mid1 = max(0, h1 - w)
+    y_mid2 = min(H, h2 + w)
+    y_bot1 = max(0, h2 - w)
+    y_bot2 = H
+
+    top_crop = top_part[y_top1:y_top2, :].copy()
+    mid_crop = mid_part[y_mid1:y_mid2, :].copy()
+    bot_crop = bottom_part[y_bot1:y_bot2, :].copy()
+
+    return top_crop, mid_crop, bot_crop
 
 
 def main():
     args = docopt(__doc__)
-
     img = get_image(args)
+    h1, h2 = get_heights(args, img)
+    rc, w = get_cut_heights(args, img)
+    top_path, mid_path, bot_path = get_paths(args)
 
-    heights = get_heights(args, img)
-    nhs = len(heights)
-    paths = get_paths(args, nhs + 1)
-    rc = get_cut_heights(args, img)
+    img_top, img_mid, img_bot = split_image_band(img, h1, h2, rc, w)
 
-    images = []
-    imk = img
-    h_cum = 0
-    for hi in heights:
-        i1, i2 = split_image(imk, hi - h_cum, rc)
-        h_cum += hi
-        images.append(i1)
-        imk = i2
-    images.append(i2)
+    cv2.imwrite(top_path, img_top)
+    cv2.imwrite(mid_path, img_mid)
+    cv2.imwrite(bot_path, img_bot)
 
-    print("Output written to:")
-    for img, path in zip(images, paths):
-        cv2.imwrite(path, img)
-        print(f"    {path}")
+    print("✅ Output written to:")
+    print(f"  Top:    {top_path}")
+    print(f"  Middle: {mid_path}")
+    print(f"  Bottom: {bot_path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

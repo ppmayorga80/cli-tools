@@ -26,7 +26,7 @@ alias tm1='tmux a -t1'
 alias tm2='tmux a -t2'
 alias tm3='tmux a -t3'
 alias logout="[[ -o login ]] && logout || qdbus org.kde.ksmserver /KSMServer logout 0 0 1"
-
+alias fixgeo="printf 'Fixing Geogebra app...' && xattr -rd com.apple.quarantine /Applications/GeoGebra.app && echo 'Fixed.'"
 #       __                        __ 
 #      / /___  ____ _____  __  __/ /_
 #     / / __ \/ __ '/ __ \/ / / / __/
